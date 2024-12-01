@@ -11,8 +11,10 @@ import (
 )
 
 func main() {
-	result := day01a("day01a.txt")
-	fmt.Println(result)
+	day01a := day01a("day01a.txt")
+	fmt.Printf("Day 01 Part A: %f\n", day01a)
+	day01b := day01b("day01b.txt")
+	fmt.Printf("Day 01 Part B: %f\n", day01b)
 }
 
 func readLists(filename string) ([]float64, []float64) {
@@ -43,6 +45,10 @@ func readLists(filename string) ([]float64, []float64) {
 		rightList = append(rightList, floats[1])
 	}
 
+	// Sort both lists
+	sort.Float64s(leftList)
+	sort.Float64s(rightList)
+
 	// return both lists in float64
 	return leftList, rightList
 }
@@ -51,10 +57,6 @@ func day01a(filename string) float64 {
 	leftList, rightList := readLists(filename)
 
 	var result float64
-
-	// Sort both lists
-	sort.Float64s(leftList)
-	sort.Float64s(rightList)
 
 	// Loop over list
 	for index, value := range leftList {
@@ -65,6 +67,29 @@ func day01a(filename string) float64 {
 	return result
 }
 
-// func day01b(filename string) float64 {
-// 	return 0
-// }
+func day01b(filename string) float64 {
+	leftList, rightList := readLists(filename)
+
+	// Create map of all numbers and their count
+	duplicatesMap := make(map[float64]int)
+
+	// Loop over right list
+	for _, item := range rightList {
+		duplicatesMap[item]++
+	}
+
+	var result float64
+
+	// Loop over list
+	for _, value := range leftList {
+		// Get times its present in right side list
+		count, exists := duplicatesMap[value]
+
+		if exists {
+			result += value * float64(count)
+		}
+
+	}
+
+	return result
+}
