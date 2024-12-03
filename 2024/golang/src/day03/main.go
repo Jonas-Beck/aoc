@@ -6,13 +6,14 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 func main() {
 	day03a := day03a("day03a.txt")
 	fmt.Printf("Day 03 Part A: %f\n", day03a)
-	// day03b := day03b("day03b.txt")
-	// fmt.Printf("Day 03 Part B: %f\n", day03b)
+	day03b := day03b("day03b.txt")
+	fmt.Printf("Day 03 Part B: %f\n", day03b)
 }
 
 func readFile(filename string) string {
@@ -50,29 +51,36 @@ func day03a(filename string) float64 {
 	return result
 }
 
-// func day03b(filename string) float64 {
-// 	leftList, rightList := readLists(filename)
-//
-// 	// Create map of all numbers and their count
-// 	duplicatesMap := make(map[float64]int)
-//
-// 	// Loop over right list
-// 	for _, item := range rightList {
-// 		duplicatesMap[item]++
-// 	}
-//
-// 	var result float64
-//
-// 	// Loop over list
-// 	for _, value := range leftList {
-// 		// Get times its present in right side list
-// 		count, exists := duplicatesMap[value]
-//
-// 		if exists {
-// 			result += value * float64(count)
-// 		}
-//
-// 	}
-//
-// 	return result
-// }
+func day03b(filename string) float64 {
+	corruptedMemory := readFile(filename)
+	mulPattern := `mul\((?P<first>[0-9]+),(?P<second>[0-9]+)\)|do\(\)|don't\(\)`
+	mulRegex := regexp.MustCompile(mulPattern)
+	var result float64
+	var disabled bool
+
+	matches := mulRegex.FindAllStringSubmatch(corruptedMemory, -1)
+
+	for _, value := range matches {
+		if strings.Contains(value[0], "don't()") {
+			disabled = true
+		} else if strings.Contains(value[0], "do()") {
+			disabled = false
+		}
+
+		result += multiply(value[1], value[2], disabled)
+
+	}
+
+	return result
+}
+
+func multiply(firstString string, secondString string, disabled bool) float64 {
+	if disabled {
+		return 0
+	}
+
+	first, _ := strconv.ParseFloat(firstString, 64)
+	second, _ := strconv.ParseFloat(secondString, 64)
+
+	return first * second
+}
