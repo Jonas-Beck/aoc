@@ -9,8 +9,8 @@ import (
 func main() {
 	day04a := day04a("day04a.txt")
 	fmt.Printf("Day 04 Part A: %f\n", day04a)
-	// day04b := day04b("day04b.txt")
-	// fmt.Printf("Day 04 Part B: %f\n", day04b)
+	day04b := day04b("day04b.txt")
+	fmt.Printf("Day 04 Part B: %f\n", day04b)
 }
 
 func readFile(filename string) [][]rune {
@@ -142,17 +142,31 @@ func checkSlice(words []rune) int {
 	return xmasCount
 }
 
-//
-// func checkRune(value rune, current string, target []rune) int {
-// 	if value == target[len(current)] {
-// 		current += string(value)
-// 		if len(current) == 4 {
-// 			current = ""
-// 			return 1
-// 		}
-// 	}
-// 	return 0
-// }
+func day04b(filename string) int {
+	words := readFile(filename)
 
-// func day04b(filename string) float64 {
-// }
+	var result int
+
+	for columnIndex := 1; columnIndex < len(words)-1; columnIndex++ {
+		for rowIndex := 1; rowIndex < len(words[columnIndex])-1; rowIndex++ {
+			if words[columnIndex][rowIndex] == 'A' {
+				result += checkStrings(getXPattern(words, columnIndex, rowIndex))
+			}
+		}
+	}
+
+	return result
+}
+
+func checkStrings(first string, second string) int {
+	if (first == "SM" || first == "MS") &&
+		(second == "SM" || second == "MS") {
+		return 1
+	}
+	return 0
+}
+
+func getXPattern(words [][]rune, x, y int) (string, string) {
+	return string([]rune{words[x-1][y-1], words[x+1][y+1]}),
+		string([]rune{words[x-1][y+1], words[x+1][y-1]})
+}
