@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 )
 
 func main() {
 	day05a := day05a("day05a.txt")
-	fmt.Printf("Day 05 Part A: %f\n", day05a)
-	// day05b := day05b("day05b.txt")
-	// fmt.Printf("Day 05 Part B: %f\n", day05b)
+	fmt.Printf("Day 05 Part A: %d\n", day05a)
+	day05b := day05b("day05b.txt")
+	fmt.Printf("Day 05 Part B: %d\n", day05b)
 }
 
 func readFile(filename string) (map[int][]int, [][]int) {
@@ -91,5 +92,58 @@ func getMiddleNumber(pageNumbers []int, edges map[int][]int) int {
 	return pageNumbers[(len(pageNumbers) / 2)]
 }
 
-// func day05b(filename string) int {
-// }
+func day05b(filename string) int {
+	edges, allPageNumbers := readFile(filename)
+
+	result := 0
+
+	for _, pageNumbers := range allPageNumbers {
+		result += getMiddleNumbersFailing(pageNumbers, edges)
+	}
+
+	return result
+}
+
+func getMiddleNumbersFailing(pageNumbers []int, edges map[int][]int) int {
+	forbiddenNumbers := make([]int, 0)
+
+	for _, pageNumber := range pageNumbers {
+		if slices.Contains(forbiddenNumbers, pageNumber) {
+
+			sorted := TopologicalSort(pageNumbers, edges)
+			return sorted[(len(sorted) / 2)]
+		}
+
+		numbers := edges[pageNumber]
+
+		if numbers != nil {
+			forbiddenNumbers = append(forbiddenNumbers, numbers...)
+		}
+
+	}
+
+	return 0
+}
+
+func TopologicalSort(input []int, edges map[int][]int) []int {
+	result := make([]int, len(input))
+	copy(result, input)
+
+	sort.Slice(result, func(i, j int) bool {
+		a, b := result[i], result[j]
+
+		// Break early if A dosen't have any edges
+		if _, hasA := edges[a]; !hasA {
+			return false
+		}
+
+		// Break early if B dosen't have any edges
+		if _, hasB := edges[b]; !hasB {
+			return true
+		}
+
+		return slices.Contains(edges[a], b)
+	})
+
+	return result
+}
