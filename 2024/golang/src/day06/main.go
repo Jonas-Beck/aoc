@@ -12,6 +12,15 @@ type Position struct {
 	Col int
 }
 
+func CreateDeepCopy(original [][]rune) [][]rune {
+	newSlice := make([][]rune, len(original))
+	for i := range original {
+		newSlice[i] = make([]rune, len(original[i]))
+		copy(newSlice[i], original[i])
+	}
+	return newSlice
+}
+
 func (p Position) CheckOutOfBounds(guardMap [][]rune) bool {
 	// Check row bounds
 	if p.Row < 0 || p.Row >= len(guardMap) {
@@ -27,6 +36,11 @@ func (p Position) CheckOutOfBounds(guardMap [][]rune) bool {
 }
 
 type Direction int
+
+type State struct {
+	Pos Position
+	Dir Direction
+}
 
 const (
 	UP Direction = iota
@@ -57,8 +71,8 @@ func (d Direction) Next() Direction {
 func main() {
 	day06a := day06a("day06a.txt")
 	fmt.Printf("Day 06 Part A: %d\n", day06a)
-	// day06b := day06b("day06b.txt")
-	// fmt.Printf("Day 06 Part B: %d\n", day06b)
+	day06b := day06b("day06b.txt")
+	fmt.Printf("Day 06 Part B: %d\n", day06b)
 }
 
 func readFile(filename string) ([][]rune, Position) {
@@ -75,7 +89,6 @@ func readFile(filename string) ([][]rune, Position) {
 	// Scan each line in file
 	for scanner.Scan() {
 		values := []rune(scanner.Text())
-		fmt.Println(string(values))
 		if index := slices.Index(values, '^'); index != -1 {
 			startPosition = Position{len(guardMap), index}
 		}
@@ -88,13 +101,14 @@ func readFile(filename string) ([][]rune, Position) {
 func day06a(filename string) int {
 	guardMap, startPosition := readFile(filename)
 
-	visitedPositions := make(map[Position]bool)
-	moveGuard(guardMap, UP, startPosition, visitedPositions)
+	visitedPositions := moveGuard(guardMap, UP, startPosition)
 
 	return len(visitedPositions)
 }
 
-func moveGuard(guardMap [][]rune, direction Direction, currentPosition Position, visitedPositions map[Position]bool) {
+func moveGuard(guardMap [][]rune, direction Direction, currentPosition Position) map[Position]bool {
+	visitedPositions := make(map[Position]bool)
+
 	for {
 		visitedPositions[currentPosition] = true
 		offsetRow, offsetCol := direction.GetOffset()
@@ -113,32 +127,60 @@ func moveGuard(guardMap [][]rune, direction Direction, currentPosition Position,
 
 	}
 
-	visitedPositions[currentPosition] = true
-	offsetRow, offsetCol := direction.GetOffset()
-
-	newPosition := Position{Col: currentPosition.Col + offsetCol, Row: currentPosition.Row + offsetRow}
-
-	if outOfBounds := newPosition.CheckOutOfBounds(guardMap); outOfBounds {
-		return
-	}
-
-	if guardMap[newPosition.Row][newPosition.Col] == '#' {
-		direction = direction.Next()
-		newPosition = currentPosition
-	}
-
-	moveGuard(guardMap, direction, newPosition, visitedPositions)
+	return visitedPositions
 }
 
-// func day06b(filename string) int {
-// 	edges, allPageNumbers := readFile(filename)
-//
-// 	result := 0
-//
-// 	for _, pageNumbers := range allPageNumbers {
-// 		result += getMiddleNumbersFailing(pageNumbers, edges)
-// 	}
-//
-// 	return result
-// }
-//
+func checkIfGuardStuck(guardMap [][]rune, direction Direction, currentPosition Position) bool {
+	visitedObstructions := make(map[State]bool)
+
+	for {
+		offsetRow, offsetCol := direction.GetOffset()
+
+		state := State{
+			Pos: currentPosition,
+			Dir: direction,
+		}
+
+		if visitedObstructions[state] {
+			return true
+		}
+
+		newPosition := Position{Col: currentPosition.Col + offsetCol, Row: currentPosition.Row + offsetRow}
+
+		if outOfBounds := newPosition.CheckOutOfBounds(guardMap); outOfBounds {
+			return false
+		}
+
+		if guardMap[newPosition.Row][newPosition.Col] == '#' {
+			visitedObstructions[state] = true
+			direction = direction.Next()
+		} else {
+			currentPosition = newPosition
+		}
+
+	}
+}
+
+func day06b(filename string) int {
+	guardMap, startPosition := readFile(filename)
+
+	visitedPositions := moveGuard(guardMap, UP, startPosition)
+
+	// Remove starting position
+	delete(visitedPositions, startPosition)
+
+	obstructionPositons := 0
+
+	for position := range visitedPositions {
+
+		newGuardMap := CreateDeepCopy(guardMap)
+		newGuardMap[position.Row][position.Col] = '#'
+
+		if stuck := checkIfGuardStuck(newGuardMap, UP, startPosition); stuck {
+			obstructionPositons++
+		}
+
+	}
+
+	return obstructionPositons
+}
