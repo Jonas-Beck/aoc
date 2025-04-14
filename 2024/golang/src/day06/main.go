@@ -95,6 +95,24 @@ func day06a(filename string) int {
 }
 
 func moveGuard(guardMap [][]rune, direction Direction, currentPosition Position, visitedPositions map[Position]bool) {
+	for {
+		visitedPositions[currentPosition] = true
+		offsetRow, offsetCol := direction.GetOffset()
+
+		newPosition := Position{Col: currentPosition.Col + offsetCol, Row: currentPosition.Row + offsetRow}
+
+		if outOfBounds := newPosition.CheckOutOfBounds(guardMap); outOfBounds {
+			break
+		}
+
+		if guardMap[newPosition.Row][newPosition.Col] == '#' {
+			direction = direction.Next()
+		} else {
+			currentPosition = newPosition
+		}
+
+	}
+
 	visitedPositions[currentPosition] = true
 	offsetRow, offsetCol := direction.GetOffset()
 
