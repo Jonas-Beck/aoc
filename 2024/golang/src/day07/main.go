@@ -50,7 +50,7 @@ func readInts(line string) []int {
 	return ints
 }
 
-func calculateEquation(target int, numbers []int, operators []rune) int {
+func calculateEquation(target int, numbers []int, operators []string) int {
 	var ints []int
 
 	ints = getOperatorResults(target, numbers[1], []int{numbers[0]}, operators)
@@ -66,7 +66,7 @@ func calculateEquation(target int, numbers []int, operators []rune) int {
 	return 0
 }
 
-func getOperatorResults(target, number int, numbers []int, operators []rune) []int {
+func getOperatorResults(target, number int, numbers []int, operators []string) []int {
 	result := make([]int, 0)
 
 	for _, value := range numbers {
@@ -83,12 +83,15 @@ func getOperatorResults(target, number int, numbers []int, operators []rune) []i
 	return result
 }
 
-func applyOperator(a, b int, op rune) int {
+func applyOperator(a, b int, op string) int {
 	switch op {
-	case '+':
+	case "+":
 		return a + b
-	case '*':
+	case "*":
 		return a * b
+	case "||":
+		result, _ := strconv.Atoi(fmt.Sprintf("%d%d", a, b))
+		return result
 	default:
 		return 0 // Default case, though with your operators this wouldn't be reached
 	}
@@ -99,10 +102,9 @@ func day07a(filename string) int {
 
 	result := 0
 
-	operators := []rune{'+', '*'}
+	operators := []string{"+", "*"}
 
 	for target, values := range numbers {
-		fmt.Println(target, values)
 		result += calculateEquation(target, values, operators)
 	}
 
@@ -110,7 +112,15 @@ func day07a(filename string) int {
 }
 
 func day07b(filename string) int {
-	// guardMap, startPosition := readFile(filename)
+	numbers := readFile(filename)
 
-	return 0
+	result := 0
+
+	operators := []string{"+", "*", "||"}
+
+	for target, values := range numbers {
+		result += calculateEquation(target, values, operators)
+	}
+
+	return result
 }
