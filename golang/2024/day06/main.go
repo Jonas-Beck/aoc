@@ -7,38 +7,11 @@ import (
 	"slices"
 
 	"github.com/Jonas-Beck/aoc/golang/lib/direction"
+	"github.com/Jonas-Beck/aoc/golang/lib/grid"
 )
 
-type Position struct {
-	Row int
-	Col int
-}
-
-func CreateDeepCopy(original [][]rune) [][]rune {
-	newSlice := make([][]rune, len(original))
-	for i := range original {
-		newSlice[i] = make([]rune, len(original[i]))
-		copy(newSlice[i], original[i])
-	}
-	return newSlice
-}
-
-func (p Position) CheckOutOfBounds(guardMap [][]rune) bool {
-	// Check row bounds
-	if p.Row < 0 || p.Row >= len(guardMap) {
-		return true
-	}
-
-	// Check column bounds
-	if p.Col < 0 || p.Col >= len(guardMap[p.Row]) {
-		return true
-	}
-
-	return false
-}
-
 type State struct {
-	Pos Position
+	Pos grid.Position
 	Dir direction.Direction
 }
 
@@ -49,7 +22,7 @@ func main() {
 	fmt.Printf("Day 06 Part B: %d\n", day06b)
 }
 
-func readFile(filename string) ([][]rune, Position) {
+func readFile(filename string) (grid.Grid, grid.Position) {
 	file, _ := os.Open(filename)
 	defer file.Close()
 
@@ -57,14 +30,14 @@ func readFile(filename string) ([][]rune, Position) {
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
 
-	var guardMap [][]rune
-	var startPosition Position
+	var guardMap grid.Grid
+	var startPosition grid.Position
 
 	// Scan each line in file
 	for scanner.Scan() {
 		values := []rune(scanner.Text())
 		if index := slices.Index(values, '^'); index != -1 {
-			startPosition = Position{len(guardMap), index}
+			startPosition = grid.Position{Row: len(guardMap), Col: index}
 		}
 		guardMap = append(guardMap, values)
 	}
@@ -75,21 +48,21 @@ func readFile(filename string) ([][]rune, Position) {
 func day06a(filename string) int {
 	guardMap, startPosition := readFile(filename)
 
-	visitedPositions := moveGuard(guardMap, UP, startPosition)
+	visitedPositions := moveGuard(guardMap, direction.UP, startPosition)
 
 	return len(visitedPositions)
 }
 
-func moveGuard(guardMap [][]rune, direction Direction, currentPosition Position) map[Position]bool {
-	visitedPositions := make(map[Position]bool)
+func moveGuard(guardMap grid.Grid, direction direction.Direction, currentPosition grid.Position) map[grid.Position]bool {
+	visitedPositions := make(map[grid.Position]bool)
 
 	for {
 		visitedPositions[currentPosition] = true
 		offsetRow, offsetCol := direction.GetOffset()
 
-		newPosition := Position{Col: currentPosition.Col + offsetCol, Row: currentPosition.Row + offsetRow}
+		newPosition := grid.Position{Col: currentPosition.Col + offsetCol, Row: currentPosition.Row + offsetRow}
 
-		if outOfBounds := newPosition.CheckOutOfBounds(guardMap); outOfBounds {
+		if outOfBounds := guardMap.CheckOutOfBounds(newPosition); outOfBounds {
 			break
 		}
 
@@ -104,7 +77,7 @@ func moveGuard(guardMap [][]rune, direction Direction, currentPosition Position)
 	return visitedPositions
 }
 
-func checkIfGuardStuck(guardMap [][]rune, direction Direction, currentPosition Position) bool {
+func checkIfGuardStuck(guardMap grid.Grid, direction direction.Direction, currentPosition grid.Position) bool {
 	visitedObstructions := make(map[State]bool)
 
 	for {
@@ -119,9 +92,9 @@ func checkIfGuardStuck(guardMap [][]rune, direction Direction, currentPosition P
 			return true
 		}
 
-		newPosition := Position{Col: currentPosition.Col + offsetCol, Row: currentPosition.Row + offsetRow}
+		newPosition := grid.Position{Col: currentPosition.Col + offsetCol, Row: currentPosition.Row + offsetRow}
 
-		if outOfBounds := newPosition.CheckOutOfBounds(guardMap); outOfBounds {
+		if outOfBounds := guardMap.CheckOutOfBounds(newPosition); outOfBounds {
 			return false
 		}
 
@@ -138,7 +111,7 @@ func checkIfGuardStuck(guardMap [][]rune, direction Direction, currentPosition P
 func day06b(filename string) int {
 	guardMap, startPosition := readFile(filename)
 
-	visitedPositions := moveGuard(guardMap, UP, startPosition)
+	visitedPositions := moveGuard(guardMap, direction.UP, startPosition)
 
 	// Remove starting position
 	delete(visitedPositions, startPosition)
@@ -147,10 +120,10 @@ func day06b(filename string) int {
 
 	for position := range visitedPositions {
 
-		newGuardMap := CreateDeepCopy(guardMap)
+		newGuardMap := guardMap.DeepCopy()
 		newGuardMap[position.Row][position.Col] = '#'
 
-		if stuck := checkIfGuardStuck(newGuardMap, UP, startPosition); stuck {
+		if stuck := checkIfGuardStuck(newGuardMap, direction.UP, startPosition); stuck {
 			obstructionPositons++
 		}
 

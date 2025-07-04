@@ -93,7 +93,7 @@ func applyOperator(a, b int, op string) int {
 		result, _ := strconv.Atoi(fmt.Sprintf("%d%d", a, b))
 		return result
 	default:
-		return 0 // Default case, though with your operators this wouldn't be reached
+		return 0
 	}
 }
 
